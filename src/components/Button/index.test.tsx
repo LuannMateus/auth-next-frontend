@@ -1,8 +1,7 @@
 import { render } from '@testing-library/react';
-import { CloneMe } from '.';
 
-describe('<CloneMe />', () => {
+describe('<Button />', () => {
   it('Should render', () => {
-    render(<CloneMe />);
+    render(<input />);
   });
 });
