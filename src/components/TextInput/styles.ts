@@ -63,9 +63,9 @@ export const Input = styled.input<
     height: 100%;
     font-size: ${theme.font.sizes.normal};
     transition: ${theme.transitions.fast};
-    padding: ${theme.spacings.small} ${theme.spacings.xsmall};
+    padding: ${theme.spacings.small} 0;
+    padding-left: 2rem;
     background: ${theme.colors.white};
-    padding-right: 3.7rem;
     border-radius: ${theme.spacings.tiny};
     outline: none;
     &::placeholder {

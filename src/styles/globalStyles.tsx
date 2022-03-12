@@ -13,6 +13,7 @@ export const GlobalStyles = createGlobalStyle`
   html, body {
     font-size: 1.6rem;
     font-family: ${({ theme }) => theme.font.family.default};
+    background: ${({ theme }) => theme.colors.primary};
     scroll-behavior: smooth;
     padding: 0;
   }
@@ -31,7 +32,7 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   a {
-    color: ${({ theme }) => theme.colors.secondaryColor};
+    color: ${({ theme }) => theme.colors.secondary};
   }
 
   .table {

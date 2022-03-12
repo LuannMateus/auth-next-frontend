@@ -24,6 +24,11 @@ type NextAuthSessionCallbackProps = {
   token: NextAuthSession;
 };
 
+type CredentialsProps = {
+  email: string;
+  password: string;
+};
+
 export default NextAuth({
   jwt: {
     maxAge: 30 * 24 * 60 * 60,
@@ -36,11 +41,10 @@ export default NextAuth({
   providers: [
     CredentialsProvider({
       name: 'Credentials',
-      credentials: {
-        email: { label: 'Email or username' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
+      credentials: {},
+      async authorize(credentials: CredentialsProps) {
+        if (!credentials?.email || !credentials?.password) return null;
+
         try {
           const { login } = await gqlClient.request(
             GQL_MUTATION_AUTHENTICATE_USER,
