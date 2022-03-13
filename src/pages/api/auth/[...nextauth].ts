@@ -68,8 +68,6 @@ export default NextAuth({
             email,
           };
         } catch (e) {
-          console.log(e);
-
           return null;
         }
       },
@@ -98,8 +96,6 @@ export default NextAuth({
         if (!token?.expiration) return Promise.resolve({});
 
         if (actualDateInSeconds > token.expiration) return Promise.resolve({});
-
-        console.log('USUARIO LOGADO:', token);
       }
 
       return Promise.resolve(token);

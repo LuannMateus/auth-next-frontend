@@ -37,3 +37,31 @@ export const Button = styled.button<Pick<ButtonProps, 'color'>>`
     }
   `}
 `;
+
+export const DeleteButton = styled.button`
+  ${() => css`
+    width: 5rem;
+
+    align-self: flex-end;
+
+    border: none;
+    background: none;
+
+    cursor: pointer;
+
+    transition: filter 300ms ease-in-out;
+
+    > svg {
+      color: red;
+      width: 2rem;
+    }
+
+    &:hover {
+      filter: brightness(75%);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+    }
+  `}
+`;

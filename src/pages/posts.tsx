@@ -1,11 +1,16 @@
 import { GetServerSideProps } from 'next';
 import { useSession, getSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { Wrapper } from '../components/Wrapper';
 import { gqlClient } from '../graphql/client';
+import { GQL_MUTATION_DELETE_POST } from '../graphql/mutations/post';
 import { GQL_QUERY_GET_POSTS } from '../graphql/queries/post';
 import { frontendRedirect } from '../utils/frontendRedirect';
 import { serverSideRedirect } from '../utils/serverSideRedirect';
+import { Delete } from '@styled-icons/material-outlined';
+import { DeleteButton } from '../components/Button/styles';
+import { PostButtonContainer } from '../styles/pages/posts/styles';
 
 export type StrapiPost = {
   id?: string;
@@ -19,6 +24,12 @@ export type PostsPageProps = {
 
 export default function PostsPages({ posts = [] }: PostsPageProps) {
   const { data: session, status } = useSession();
+  const [postsState, setPostsState] = useState(posts);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    setPostsState(posts);
+  }, [posts]);
 
   if (!session && !status) {
     return frontendRedirect();
@@ -30,15 +41,38 @@ export default function PostsPages({ posts = [] }: PostsPageProps) {
     return <p>Você não está autenticado</p>;
   }
 
+  const handleDelete = async (id: string) => {
+    setDeleting(true);
+
+    try {
+      await gqlClient.request(
+        GQL_MUTATION_DELETE_POST,
+        { id },
+        {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      );
+
+      setPostsState((s) => s.filter((p) => p.id !== id));
+    } catch (e) {
+      alert('Não foi possível excluir este post');
+    }
+
+    setDeleting(false);
+  };
+
   return (
     <Wrapper>
       <h1>Olá {session?.user?.name || 'ninguém'}</h1>
-      {posts.map((p) => (
-        <p key={'post-' + p.id}>
+      {postsState.map((p) => (
+        <PostButtonContainer key={'post-' + p.id}>
           <Link href={`/${p.id}`}>
             <a>{p.title}</a>
           </Link>
-        </p>
+          <DeleteButton onClick={() => handleDelete(p.id)} disabled={deleting}>
+            <Delete />
+          </DeleteButton>
+        </PostButtonContainer>
       ))}
     </Wrapper>
   );
