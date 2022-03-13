@@ -5,7 +5,7 @@ import { GQL_QUERY_GET_POSTS } from '../graphql/queries/post';
 import { serverSideRedirect } from '../utils/serverSideRedirect';
 import { StrapiPost } from '../components/FormPost';
 import { PrivateComponent } from '../components/PrivateComponent';
-import { PostsTemplate } from '../templates/PostsTemplate';
+import { PostsTemplate } from '../templates/Posts';
 
 export type PostsPageProps = {
   posts?: StrapiPost[];
