@@ -1,20 +1,10 @@
 import NextAuth, { Session, User, DefaultUser } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 import { gqlClient } from '../../../graphql/client';
 import { GQL_MUTATION_AUTHENTICATE_USER } from '../../../graphql/mutations/auth';
 
-type NextAuthSession = {
-  id: string;
-  jwt: string;
-  name: string;
-  email: string;
-  expiration: number;
-};
-
-type NextAuthJwtCallbackProps = {
-  token: NextAuthSession;
-  user: NextAuthSession;
-};
+type NextAuthSession = Record<string, string>;
 
 type NextAuthSessionCallbackProps = {
   session: Session & {
@@ -28,6 +18,9 @@ type CredentialsProps = {
   email: string;
   password: string;
 };
+
+const actualDateInSeconds = Math.floor(Date.now() / 1000);
+const tokenExpirationInSeconds = Math.floor(7 * 24 * 60 * 60);
 
 export default NextAuth({
   jwt: {
@@ -54,48 +47,41 @@ export default NextAuth({
             },
           );
 
-          const { jwt, user } = login;
-          const { id, username, email } = user;
-
-          if (!jwt || !id || !username || !email) {
-            return null;
-          }
-
-          return {
-            jwt,
-            id,
-            name: username,
-            email,
-          };
+          return login;
         } catch (e) {
           return null;
         }
       },
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
   ],
   callbacks: {
-    jwt: async ({ token, user }: NextAuthJwtCallbackProps) => {
+    jwt: async ({ token, user, account }) => {
       const isSignIn = !!user;
-      const actualDateInSeconds = Math.floor(Date.now() / 1000);
-      const tokenExpirationInSeconds = Math.floor(7 * 24 * 60 * 60);
 
       if (isSignIn) {
-        if (!user || !user.jwt || !user.name || !user.email || !user.id) {
-          return Promise.resolve({});
+        if (account && account?.provider === 'google') {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/google/callback?access_token=${account?.access_token}`,
+          );
+
+          const data = await response.json();
+
+          token = setToken(data);
+
+          return Promise.resolve(token);
+        } else {
+          token = setToken(user as unknown as StrapiLoginData);
+
+          return Promise.resolve(token);
         }
-
-        token.jwt = user.jwt;
-        token.id = user.id;
-        token.name = user.name;
-        token.email = user.email;
-
-        token.expiration = Math.floor(
-          actualDateInSeconds + tokenExpirationInSeconds,
-        );
       } else {
         if (!token?.expiration) return Promise.resolve({});
 
-        if (actualDateInSeconds > token.expiration) return Promise.resolve({});
+        if (actualDateInSeconds > +token.expiration) return Promise.resolve({});
       }
 
       return Promise.resolve(token);
@@ -122,3 +108,26 @@ export default NextAuth({
     },
   },
 });
+
+type StrapiUser = {
+  id: string;
+  username: string;
+  email: string;
+};
+
+type StrapiLoginData = {
+  jwt: string;
+  user: StrapiUser;
+};
+
+const setToken = (data: StrapiLoginData): NextAuthSession => {
+  if (!data || !data?.user || !data?.jwt) return {};
+
+  return {
+    jwt: data.jwt,
+    id: data.user.id,
+    name: data.user.username,
+    email: data.user.email,
+    expiration: `${actualDateInSeconds + tokenExpirationInSeconds}`,
+  };
+};
